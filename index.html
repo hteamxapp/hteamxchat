@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>HTeamX Chat</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    h2 { text-align: center; }
+    #chat { border: 1px solid #ccc; padding: 10px; background: white; height: 400px; overflow-y: scroll; margin-bottom: 10px; }
+    .msg { margin: 5px 0; border-bottom: 1px dashed #ddd; padding-bottom: 3px; }
+    input, button { padding: 10px; margin: 5px 0; width: 100%; }
+    button { background: #28a745; color: white; border: none; cursor: pointer; }
+    button:hover { background: #218838; }
+  </style>
+</head>
+<body>
+  <h2>HTeamX Realtime Chat</h2>
+  <div id="chat"></div>
+  <input type="text" id="name" placeholder="Tên của bạn">
+  <input type="text" id="message" placeholder="Tin nhắn...">
+  <button onclick="sendMessage()">Gửi</button>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCqRf5v4S6QjWYgNu4I1lWaum6BRqJp2bg",
+      authDomain: "hteamxchat.firebaseapp.com",
+      databaseURL: "https://hteamxchat-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "hteamxchat",
+      storageBucket: "hteamxchat.firebasestorage.app",
+      messagingSenderId: "524656749236",
+      appId: "1:524656749236:web:4e59111b8f0acb6d9ec5e1",
+      measurementId: "G-96J2N6RQC2"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function sendMessage() {
+      const name = document.getElementById("name").value.trim();
+      const message = document.getElementById("message").value.trim();
+      if (name && message) {
+        db.ref("messages").push({ name, message });
+        document.getElementById("message").value = "";
+      }
+    }
+
+    const chat = document.getElementById("chat");
+    db.ref("messages").on("child_added", function(snapshot) {
+      const { name, message } = snapshot.val();
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "msg";
+      msgDiv.textContent = `${name}: ${message}`;
+      chat.appendChild(msgDiv);
+      chat.scrollTop = chat.scrollHeight;
+    });
+  </script>
+</body>
+</html>
