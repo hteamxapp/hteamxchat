@@ -1,26 +1,91 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HTeamX Chat</title>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-    h2 { text-align: center; }
-    #chat { border: 1px solid #ccc; padding: 10px; background: white; height: 400px; overflow-y: scroll; margin-bottom: 10px; }
-    .msg { margin: 5px 0; border-bottom: 1px dashed #ddd; padding-bottom: 3px; }
-    input, button { padding: 10px; margin: 5px 0; width: 100%; }
-    button { background: #28a745; color: white; border: none; cursor: pointer; }
-    button:hover { background: #218838; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background: #121212;
+      color: white;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #00ffe7;
+      margin-bottom: 20px;
+    }
+
+    #chat {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 10px;
+      height: 400px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+
+    .msg {
+      padding: 5px 10px;
+      margin-bottom: 6px;
+      background: #333;
+      border-radius: 5px;
+    }
+
+    select, input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    input, select {
+      background: #2c2c2c;
+      color: white;
+    }
+
+    button {
+      background: #00ffe7;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #00ddcc;
+    }
   </style>
 </head>
 <body>
-  <h2>HTeamX Realtime Chat</h2>
-  <div id="chat"></div>
-  <input type="text" id="name" placeholder="Tên của bạn">
-  <input type="text" id="message" placeholder="Tin nhắn...">
-  <button onclick="sendMessage()">Gửi</button>
+  <div class="container">
+    <h2>HTeamX Chat</h2>
+
+    <select id="room">
+      <option value="general">Phòng chung</option>
+      <option value="dev">Phòng Dev</option>
+      <option value="random">Phòng Random</option>
+    </select>
+
+    <div id="chat"></div>
+
+    <input type="text" id="name" placeholder="Tên của bạn">
+    <input type="text" id="message" placeholder="Tin nhắn...">
+    <button onclick="sendMessage()">Gửi</button>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -37,24 +102,42 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    const chatBox = document.getElementById("chat");
+    const roomSelect = document.getElementById("room");
+
+    let currentRoom = roomSelect.value;
+
+    function loadMessages(room) {
+      chatBox.innerHTML = "";
+      db.ref("rooms/" + room).off(); // clear old listener
+      db.ref("rooms/" + room).on("child_added", function(snapshot) {
+        const { name, message } = snapshot.val();
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "msg";
+        msgDiv.textContent = `${name}: ${message}`;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      });
+    }
+
     function sendMessage() {
       const name = document.getElementById("name").value.trim();
       const message = document.getElementById("message").value.trim();
+      const room = roomSelect.value;
+
       if (name && message) {
-        db.ref("messages").push({ name, message });
+        db.ref("rooms/" + room).push({ name, message });
         document.getElementById("message").value = "";
       }
     }
 
-    const chat = document.getElementById("chat");
-    db.ref("messages").on("child_added", function(snapshot) {
-      const { name, message } = snapshot.val();
-      const msgDiv = document.createElement("div");
-      msgDiv.className = "msg";
-      msgDiv.textContent = `${name}: ${message}`;
-      chat.appendChild(msgDiv);
-      chat.scrollTop = chat.scrollHeight;
+    roomSelect.addEventListener("change", function () {
+      currentRoom = this.value;
+      loadMessages(currentRoom);
     });
+
+    // Load default room
+    loadMessages(currentRoom);
   </script>
 </body>
 </html>
